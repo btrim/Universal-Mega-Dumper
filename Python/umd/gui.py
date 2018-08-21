@@ -28,6 +28,8 @@ from appJar import gui
 import sys
 import subprocess
 
+
+
 # Event handler for when the run button is pressed.
 # De-bounce the Run button so multiple runs don't happen,
 #  and start the runUmd function in another thread
@@ -45,7 +47,7 @@ def runUmd():
     app.queueFunction(app.setStatusbarBg, "red",0)
     app.queueFunction(app.setStatusbar, "Running...",0)
 
-    args = [ sys.executable,"umd.py","--mode", modes[app.getOptionBox("Mode")],
+    args = [ sys.executable,"-m" "umd.umd","--mode", modes[app.getOptionBox("Mode")],
               "--size", app.getEntry("Size")+ (app.getOptionBox("unit") if app.getOptionBox("unit") is not None else "")]
     rwmode = app.getRadioButton("rwmode")
     ioOption = app.getOptionBox("I/O Option")
@@ -89,7 +91,8 @@ def rwmodeChanged(rb):
     app.changeOptionBox("I/O Option",ioOptions[rwmode],0)
 
 
-if __name__ == '__main__':
+def run():
+    global app,modes,ioOptions
 
     # Cart mode map from label to umd argument value.
     modes = { "MegaDrive/Genesis": "gen",

@@ -25,7 +25,8 @@
 ########################################################################
 
 import os
-import struct
+
+from .common import extractHeader
 
 ## Genesis
 #
@@ -51,31 +52,6 @@ class genesis:
     def __init__(self):        
         pass
 
-
-########################################################################    
-## byteSwap(self, ifile, ofile):
-#  \param self self
-#  \param ifile
-#  \param ofile
-#
-########################################################################
-    def byteSwap(self, ifile, ofile):
-        
-        fileSize = os.path.getsize(ifile)
-        pos = 0
-        
-        try:
-            os.remove(ofile)
-        except OSError:
-            pass
-            
-        with open(ofile, "wb+") as fwrite:
-            with open(ifile, "rb") as fread:
-                while(pos < fileSize):  
-                    badEndian = fread.read(2)
-                    revEndian = struct.pack('<h', *struct.unpack('>h', badEndian))
-                    fwrite.write(revEndian)
-                    pos += 2
 
 ########################################################################    
 ## checksum(self, file):
@@ -175,4 +151,7 @@ class genesis:
             self.headerData.update({"Country Support": f.read(16).decode("utf-8", "replace") })
         
         return self.headerData
+
+    def extractHeader(self, ifile, ofile):
+        return extractHeader(genesis.headerAddress, genesis.headerSize, ifile, ofile)
 

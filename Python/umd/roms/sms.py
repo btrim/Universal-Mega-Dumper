@@ -27,17 +27,20 @@
 import os
 import struct
 
+from .common import extractHeader
+
 ## ROM Operations
 #
 #  All Sega Master System specific functions
 
 class sms:
     
+    headerAddress = 0x7FF0
+    headerSize = 16
+        
     checksumRom = 0
     checksumCalc = 0
     
-    headerAddress = 0x7FF0
-    headerSize = 16
     headerData = {}
     
     readChunkSize = 2048
@@ -130,7 +133,7 @@ class sms:
                         i += 1
                 
                 pos += sizeOfRead
-
+        return (self.checksumCalc, self.checksumRom)
 
 ########################################################################    
 ## decodeHeader
@@ -166,3 +169,7 @@ class sms:
             self.headerData.update({"Size": [romSizeVal, hex(romSizeVal)] })
         
         return self.headerData
+
+    def extractHeader(self, ifile, ofile):
+        romsize = os.path.getsize(ifile)
+        extractHeader(sms.headerAddress, sms.headerSize, ifile, ofile)

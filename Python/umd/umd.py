@@ -35,37 +35,16 @@ import struct
 import hashlib
 import shutil
 from xml.etree.ElementTree import iterparse
-from hardware import umd
-from genesis import genesis
-from sms import sms
-from snes import snes
+from .hardware import umd
+from .roms.common import getrom, byteSwap
 
 # https://docs.python.org/3/howto/argparse.html
-
-########################################################################    
-## extractHeader(start, size, ifile, ofile):
-#  \param self self
-#  \param pos where to start reading the header
-#  \param ifile the input ROM file
-#  \param ofile the output header file
-#
-########################################################################
-def extractHeader(start, size, ifile, ofile):
-    try:
-        os.remove(ofile)
-    except OSError:
-        pass
-        
-    with open(ofile, "wb+") as fwrite:
-        with open(ifile, "rb") as fread:
-            fread.seek(start, 0)
-            readBytes = fread.read(size)
-            fwrite.write(readBytes)
 
 ####################################################################################
 ## Main
 ####################################################################################
-if __name__ == "__main__":
+
+def main():
     # Some Windows codepages cause an exception in print
     # This re-opens stdout to use a replacing IO encoder
     # An alternative is to define env variable 
@@ -209,53 +188,20 @@ if __name__ == "__main__":
         
         # read the ROM header of the cartridge, output formatted in the console
         elif args.rd == "header":
-            # Genesis Header
-            if args.mode == "gen":
-                genesis = genesis()
-                # header from file or from UMD?
-                if args.file != "console":
-                    extractHeader(genesis.headerAddress, genesis.headerSize, args.file, "_header.bin")
-                else:
-                    umd = umd(cartType, args.port)
-                    umd.read(genesis.headerAddress, genesis.headerSize, args.rd, "_header.bin")
-                # display
-                for item in sorted( genesis.formatHeader("_header.bin").items() ):
-                    print(item)
-                # cleanup
-                try:
-                    os.remove("_header.bin")
-                except OSError:
-                    pass
-                del genesis
-                
-            # Master System Header        
-            if args.mode == "sms":
-                sms = sms()
-                # header from file or from UMD?
-                if args.file != "console":
-                    extractHeader(sms.headerAddress, sms.headerSize, args.file, "_header.bin")
-                else:
-                    umd = umd(cartType, args.port)
-                    umd.read(sms.headerAddress, sms.headerSize, args.rd, "_header.bin")
-                    
-                for item in sorted( sms.formatHeader("_header.bin").items() ):
-                    print(item)
-                # cleanup
-                try:
-                    os.remove("_header.bin")
-                except OSError:
-                    pass
-                del sms
-            
-            # Super Nintendo Header
-            if args.mode == "snes":
-                snes = snes()                
-                # header could be in different locations, iterate until we find it
-                # still testing this part - not functional!
-                for key, value in snes.header.items():
-                    print("key: {}  value : {}".format(key, value))
-                    
-                del snes
+            rom = getrom(args.mode)
+
+            if args.file != "console":
+                rom.extractHeader(args.file, "_header.bin")
+            else:
+                umd = umd(cartType, args.port)
+                umd.read(rom.headerAddress, rom.headerSize, args.rd, "_header.bin")
+            for item in sorted( rom.formatHeader("_header.bin").items() ):
+                print(item)
+
+            try:
+                os.remove("_header.bin")
+            except OSError:
+                pass
                 
         # read the flash id - obviously does not work on original games with OTP roms
         elif args.rd == "fid":
@@ -381,33 +327,19 @@ if __name__ == "__main__":
     # checksum operations
     elif args.checksum:
         
-        
         # check if local file checksum or connected cartridge
         if args.file != "console":
             startTime = time.time()
+
+            rom = getrom(args.mode)
+            (checksumCalc, checksumRom) = rom.checksum(args.file)
             
-            # Genesis Checksum
-            if args.mode == "gen":
-                genesis = genesis()
-                genesis.checksum(args.file)
-                checksumCalc = genesis.checksumCalc
-                checksumRom = genesis.checksumRom
-                del genesis  
-            
-            # SMS Checksum
-            elif args.mode == "sms":
-                sms = sms()
-                sms.checksum(args.file)
-                checksumCalc = sms.checksumCalc
-                checksumRom = sms.checksumRom
-                del sms
-                
             opTime = time.time() - startTime
             
         # else, UMD knows how to calculate checksum for each cartridge type
         else:
             umd = umd(cartType, args.port)
-            umd.checksum()
+            (checksumCalc, checksumRom) = umd.checksum()
             checksumCalc = umd.checksumCalc
             checksumRom = umd.checksumRom
             opTime = umd.opTime
@@ -430,11 +362,12 @@ if __name__ == "__main__":
     # swap endianess of file    
     elif args.byteswap:
         startTime = time.time()
-        genesis = genesis()
-        genesis.byteSwap(args.byteswap[0], args.file)
+        byteSwap(args.byteswap[0], args.file)
         opTime = time.time() - startTime
-        del genesis
     else:
         parser.print_help()
         pass
+
+if __name__ == "__main__":
+    main()
 
