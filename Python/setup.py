@@ -17,6 +17,7 @@ setup(
         'gui_scripts': [
             'umd-bob = umd.gui:run'
         ]
-    }
+    },
+    install_requires=['pyserial','appJar']
     
 )
