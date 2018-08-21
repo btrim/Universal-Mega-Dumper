@@ -40,8 +40,8 @@ from subprocess import Popen, PIPE
 ####################################################################################
 ## Main
 ####################################################################################
-if __name__ == "__main__":
-    
+
+def main():
     parser = argparse.ArgumentParser(prog="multi 0.1.0.0")
     parser.add_argument("--mode", help="Set the cartridge type", choices=["cv", "gen", "sms", "pce", "tg", "snes"], type=str, default="none")
     
@@ -171,3 +171,6 @@ if __name__ == "__main__":
             time.sleep(1)
     
     print("Multi UMD Complete!")
+
+if __name__ == "__main__":
+    main()

@@ -12,7 +12,8 @@ setup(
     packages=find_packages(),
     entry_points={
         'console_scripts': [
-            'umd = umd.umd:main'
+            'umd = umd.umd:main',
+            'umd-multi = umd.multi:main'
         ],
         'gui_scripts': [
             'umd-bob = umd.gui:run'
